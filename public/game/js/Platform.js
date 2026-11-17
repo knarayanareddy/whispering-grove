@@ -3,10 +3,10 @@
   class Platform {
     constructor(name, x, y, w, h, solid) {
       this.name = name; this.x = x; this.y = y; this.w = w; this.h = h;
-      this.solid = !!solid; this.oneWay = !solid;
+      this.solid = !!solid; this.oneWay = !solid; this.imgName = 'platform_tile'; this.x0 = x; this.dx = 0; this.bounce = false;
     }
     draw(ctx, camX) {
-      const img = G.Anim.images.platform_tile;
+      const img = G.Anim.images[this.imgName] || G.Anim.images.platform_tile;
       if (!img) { return; }
       const s = this.h / img.height;
       const tw = Math.max(40, img.width * s);

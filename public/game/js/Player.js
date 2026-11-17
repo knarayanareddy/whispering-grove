@@ -14,6 +14,8 @@
       this.coyote = 0; this.jumpBuf = 0; this.dropTimer = 0; this.dblTimer = 0; this.dashTimer = 0;
       this.state = 'idle'; this.stateTime = 0;
       // stats (deliberately NOT full at start)
+      this.baseHp = 120; this.baseMp = 60; this.eclipse = 0;
+      this.bonus = { atk: 0, hp: 0, mp: 0, crit: 0, spd: 0, exp: 0, gold: 0, steal: 0, dmgPct: 0, hpPct: 0, mpPct: 0, mpRegen: 0, skillMpMul: 1 };
       this.lvl = 1; this.maxHp = 120; this.hp = 72; this.maxMp = 60; this.mp = 38;
       this.exp = 12; this.expNext = 50; this.gold = 0; this.kills = 0; this.deaths = 0;
       // story/boon modifiers
@@ -25,15 +27,18 @@
       this.t = 0;
     }
 
-    get atk() { return (8 + this.lvl * 3) * this.dmgMul * G.Diff.cur.playerDmg; }
+    get atk() { return (8 + this.lvl * 3 + this.bonus.atk) * (1 + this.bonus.dmgPct) * this.dmgMul * G.Diff.cur.playerDmg; }
 
     addExp(n) {
+      const cap = G.Prog.cap();
+      if (this.lvl >= cap) { this.exp = 0; return false; }
       this.exp += n; let leveled = false;
-      while (this.exp >= this.expNext) {
+      while (this.exp >= this.expNext && this.lvl < cap) {
         this.exp -= this.expNext; this.lvl++; leveled = true;
-        this.expNext = Math.floor(this.expNext * 1.35 + 10);
-        this.maxHp += 20; this.maxMp += 8; this.hp = this.maxHp; this.mp = this.maxMp;
+        this.expNext = Math.floor(this.expNext * 1.16 + 8);
+        this.baseHp += 20; this.baseMp += 8; G.Prog.pts++; G.Prog.recalc(this); this.hp = this.maxHp; this.mp = this.maxMp;
       }
+      if (this.lvl >= cap) this.exp = Math.min(this.exp, this.expNext - 1);
       return leveled;
     }
 
@@ -51,13 +56,13 @@
       this.vx = dir * 280; this.vy = -380; this.grounded = false; this.groundPlat = null;
       this.jumpsUsed = Math.max(this.jumpsUsed, 1);
       this.sx = 0.8; this.sy = 1.2;
-      if (this.hp <= 0) { this.hp = 0; this.dead = true; this.deadTimer = 2.4; this.vy = -520; this.vx = dir * 160; }
+      if (this.hp <= 0 && !G.Prog.phoenix(this)) { this.hp = 0; this.dead = true; this.deadTimer = 2.4; this.vy = -520; this.vx = dir * 160; }
       return true;
     }
 
     respawn() {
       const D = G.Diff.cur, cp = this.level.checkpoint || this.level.playerStart;
-      this.dead = false; this.hp = Math.max(1, Math.round(this.maxHp * D.respawnHp)); this.mp = Math.round(this.maxMp * 0.5); this.deaths++;
+      this.dead = false; this.hp = Math.max(1, Math.round(this.maxHp * D.respawnHp)); this.mp = Math.round(this.maxMp * 0.5); this.deaths++; G.Prog.phoenixUsed = false;
       this.x = cp.x; this.y = cp.y; this.shield = 0; this.vx = this.vy = 0;
       this.grounded = true; this.groundPlat = this.level.ground; this.invuln = 2; this.rot = 0; this.alpha = 1;
       this.gold = Math.floor(this.gold * (1 - D.deathGoldLoss));
@@ -75,9 +80,11 @@
       this.sx = 0.85; this.sy = 1.2;
       fx.burst(this.x, this.y - 8, { n: 14, colors: ['#bdf3ff', '#ffffff', '#fff3a0'], speed: 240, life: 0.5, size: 5, grav: 150, shape: 'star', glow: true, angle: Math.PI / 2, spread: 1.2 });
       fx.ring(this.x, this.y - 4, 55, '#aef0ff', 0.35, 5);
+      if (G.onDouble) G.onDouble(this);
     }
     land(p, impact, fx) {
       this.grounded = true; this.groundPlat = p; this.jumpsUsed = 0; this.vy = 0; this.dblTimer = 0;
+      if (p.bounce && impact > 120) { this.vy = -1080; this.grounded = false; this.groundPlat = null; this.jumpsUsed = 1; this.sx = 0.78; this.sy = 1.3; fx.ring(this.x, this.y - 4, 90, '#ffffff', 0.4, 8); return; }
       if (impact > 250) {
         const k = A.clamp(impact / 2600, 0.08, 0.3);
         this.sx = 1 + k; this.sy = 1 - k;
@@ -100,8 +107,8 @@
         return;
       }
 
-      this.mp = Math.min(this.maxMp, this.mp + 2.4 * this.mpRegenMul * dt);
-      this.hp = Math.min(this.maxHp, this.hp + 0.5 * G.Diff.cur.regenMul * dt);
+      this.mp = Math.min(this.maxMp, this.mp + 2.4 * this.mpRegenMul * (1 + this.bonus.mpRegen) * dt);
+      this.hp = Math.min(this.maxHp, this.hp + (G.Mods.noheal ? 0 : 0.5 * G.Diff.cur.regenMul) * dt);
 
       const left = input.isDown('ArrowLeft'), right = input.isDown('ArrowRight');
       let dir = (right ? 1 : 0) - (left ? 1 : 0);
@@ -114,7 +121,7 @@
       } else if (stunned) {
         this.vx = A.approach(this.vx, 0, 3, dt);
       } else {
-        const cap = MAXSPEED * this.speedMul * (acting && this.grounded ? 0.2 : 1);
+        const cap = MAXSPEED * this.speedMul * (1 + this.bonus.spd) * (acting && this.grounded ? 0.2 : 1);
         const target = dir * cap;
         let acc;
         if (dir !== 0) { acc = this.grounded ? 2800 : 1900; if (this.grounded && Math.sign(this.vx) === -dir) acc = 4200; }

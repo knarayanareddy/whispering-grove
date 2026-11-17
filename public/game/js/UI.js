@@ -17,34 +17,29 @@
       this.game = null;
     }
 
-    bind(game) {
-      this.game = game;
-      const combat = game.combat, bar = this.el.skillbar; bar.innerHTML = '';
+    buildSkillbar() {
+      const combat = this.game.combat, bar = this.el.skillbar; bar.innerHTML = ''; this.slots = {};
       for (let i = 0; i < 8; i++) {
-        const id = combat.order[i];
-        const d = document.createElement('div'); d.className = 'slot' + (id ? '' : ' locked');
-        const s = id ? G.SKILLS[id] : null;
-        d.innerHTML = '<span class="key">' + (i + 1) + '</span>' +
-          '<span class="sname">' + (s ? s.name : 'Locked') + '</span>' +
-          '<span class="cost">' + (s ? (s.mp + ' MP') : '') + '</span>' +
-          '<div class="cd"></div><span class="cdt"></span>';
+        const id = combat.order[i], d = document.createElement('div'), s = id ? combat.def(id) : null;
+        d.className = 'slot' + (id && G.Prog.isUnlocked(id) ? '' : ' locked');
+        d.innerHTML = '<span class="key">' + (i + 1) + '</span><span class="sname">' + (s ? s.name : 'Locked') + '</span><span class="cost">' + (s ? (s.mp + ' MP') : '') + '</span><div class="cd"></div><span class="cdt"></span>';
         bar.appendChild(d);
-        if (id) this.slots[id] = { root: d, cd: d.querySelector('.cd'), cdt: d.querySelector('.cdt') };
+        if (id) this.slots[id] = { root: d, cd: d.querySelector('.cd'), cdt: d.querySelector('.cdt'), name: d.querySelector('.sname'), cost: d.querySelector('.cost') };
       }
+    }
+    setMapName(n) { const e = $('mapName'); if (e) e.textContent = n; }
+    setClass(n) { const e = document.querySelector('.cls'); if (e) e.textContent = n; }
+
+    bind(game) {
+      this.game = game; this.buildSkillbar();
       this.el.chat.innerHTML = '';
-      const modal = (title, html) => G.openModal(title, html);
-      $('btnInv').onclick = () => {
-        const p = game.player, act = Object.keys(game.boons.active).map((id) => '<li><b>' + G.BOONS[id].name + '</b> - ' + G.BOONS[id].desc + ' (' + Math.ceil(game.boons.active[id]) + 's)</li>').join('');
-        modal('Inventory', '<p class="gold">Gold: <b>' + p.gold + '</b></p><h3>Active Boons</h3><ul class="plain">' + (act || '<li>None. Defeat monsters to find Boons.</li>') + '</ul><h3>Boon Guide</h3><ul class="plain">' +
-          Object.keys(G.BOONS).map((id) => '<li><b style="color:' + G.BOONS[id].color + '">' + G.BOONS[id].name + '</b> - ' + G.BOONS[id].desc + '</li>').join('') + '</ul><p class="note">Equipment and charms arrive in Phase 2.</p>');
-      };
-      $('btnSkills').onclick = () => {
-        const rows = combat.order.map((id, i) => { const s = G.SKILLS[id]; return '<li><b>' + (i + 1) + '. ' + s.name + '</b> - ' + s.mp + ' MP, ' + s.cd + 's cooldown</li>'; }).join('');
-        modal('Skills', '<ul class="plain"><li><b>Ctrl / A. Attack</b> - free basic strike</li>' + rows + '</ul><p class="note">Slots 6 to 8 unlock with the skill tree in Phase 2.</p>');
-      };
-      $('btnQuests').onclick = () => modal('Quest Log', game.story.journalHtml());
-      $('btnMap').onclick = () => this.chat('Map: Whispering Grove. Blight Gate at the east. Monsters: Leaf Slime, Grumpy Shroom, Wisp Spirit.', 'sys');
+      $('btnInv').onclick = () => G.Panels.inventory();
+      $('btnSkills').onclick = () => G.Panels.skills();
+      $('btnQuests').onclick = () => G.Panels.quests();
+      $('btnMap').onclick = () => G.Panels.worldMap();
+      $('btnCodex').onclick = () => G.Panels.codex();
       $('btnMenu').onclick = () => { if (G.togglePause) G.togglePause(); };
+      this.setMapName(game.level.name); this.setClass(G.Prog.cls ? G.CLASSES[G.Prog.cls].name : 'Apprentice Mage');
       this.chat('Welcome to Whispering Grove! Difficulty: ' + G.Diff.cur.name + '.', 'sys');
     }
 
@@ -68,8 +63,8 @@
 
     refreshQuest() {
       const g = this.game; if (!g || !g.story) return;
-      const t = g.story.trackerHtml();
-      this.el.quest.innerHTML = '<div class="qt">Quest</div><div class="qn">' + t.title + '</div><div class="qd">' + t.desc + '</div>' + (t.prog ? '<div class="qp">' + t.prog + '</div>' : '');
+      const t = g.world ? g.world.trackerInfo() : g.story.trackerHtml();
+      this.el.quest.innerHTML = '<div class="qt">Quest</div><div class="qn">' + t.title + '</div><div class="qd">' + t.desc + '</div>' + (t.prog ? '<div class="qp">' + t.prog + '</div>' : '') + (t.more ? '<div class="qp">+' + t.more + ' more in the log (Q)</div>' : '');
       this.el.quest.classList.remove('pulse'); void this.el.quest.offsetWidth; this.el.quest.classList.add('pulse');
     }
 
@@ -83,7 +78,7 @@
       const c = this.el.card; G.modal = true;
       c.innerHTML = '<h2>Chapter 1 Complete</h2><div class="ctitle">The Waking Grove</div><p class="cq">The Gloomcap Warden is free of the Hollow, and a new name echoes in the Whisper: Sorrel.</p>' +
         '<div class="stats"><span>Time</span><b>' + sm.time + '</b><span>Monsters</span><b>' + sm.kills + '</b><span>Motes</span><b>' + sm.motes + '</b><span>Boons</span><b>' + sm.boons + '</b><span>Deaths</span><b>' + sm.deaths + '</b><span>Level</span><b>' + sm.level + '</b><span>Gold</span><b>' + sm.gold + '</b><span>Difficulty</span><b>' + sm.diff + '</b></div>' +
-        '<p class="next">Next: Chapter 2, The Sunken Hollow <em>(coming in Phase 2)</em></p><button id="cardBtn">Keep Exploring</button>';
+        '<p class="next">Next: Chapter 2, Mistmarsh. Take the Hollow Tree Path at the grove\'s west end <em>(press E at the glowing gate)</em>.</p><button id="cardBtn">Keep Exploring</button>';
       c.classList.remove('hidden');
       document.getElementById('cardBtn').onclick = () => { c.classList.add('hidden'); G.modal = false; };
     }
@@ -104,11 +99,14 @@
       e.mpVal.textContent = Math.floor(p.mp) + ' / ' + p.maxMp;
       e.expVal.textContent = p.exp + ' / ' + p.expNext + '  (' + (p.exp / p.expNext * 100).toFixed(1) + '%)';
       e.lvl.textContent = p.lvl; e.gold.textContent = p.gold;
+      const pe = $('potions'); if (pe) pe.textContent = 'Z:' + G.Inv.potions.hp + ' X:' + G.Inv.potions.mp + (G.Prog.pts ? '  SP:' + G.Prog.pts : '');
       for (const id in this.slots) {
         const s = this.slots[id], cd = g.combat.cd[id], max = g.combat.cdMax[id];
         s.cd.style.height = (cd > 0 ? (cd / max) * 100 : 0) + '%';
         s.cdt.textContent = cd > 0 ? (cd >= 1 ? Math.ceil(cd) : cd.toFixed(1)) : '';
-        const lack = p.mp < G.SKILLS[id].mp;
+        const sd = g.combat.def(id); s.name.textContent = sd.name; s.cost.textContent = sd.mp + ' MP';
+        s.root.classList.toggle('locked', !G.Prog.isUnlocked(id));
+        const lack = p.mp < sd.mp;
         s.root.classList.toggle('nomp', lack && cd <= 0);
         s.root.classList.toggle('ready', !lack && cd <= 0);
       }
@@ -123,7 +121,8 @@
       if (!show) { this.bossDisp = 1; return; }
       const r = b.hp / b.maxHp; this.bossDisp = A.approach(this.bossDisp === undefined ? 1 : this.bossDisp, r, 8, dt);
       this.el.bossFill.style.width = (r * 100).toFixed(1) + '%'; this.el.bossGhost.style.width = (this.bossDisp * 100).toFixed(1) + '%';
-      this.el.bossPhase.textContent = 'Phase ' + b.phase + ' / 3';
+      const bn = bar.querySelector('.bn'); if (bn && bn.firstChild && bn.firstChild.nodeValue !== b.s.name + ' ') bn.firstChild.nodeValue = b.s.name + ' ';
+      this.el.bossPhase.textContent = (b.cfg && b.cfg.phaseNames ? b.cfg.phaseNames[b.phase - 1] + ' - ' : '') + 'Phase ' + b.phase + ' / ' + b.nPhases;
     }
 
     drawMinimap() {
@@ -137,7 +136,8 @@
         if (!e.alive) continue;
         c.fillStyle = e.isBoss ? '#c06bff' : e.elite ? '#ffb02a' : '#ff5a5a'; c.beginPath(); c.arc(e.x * sx, (e.y - 6) * sy, e.isBoss ? 4 : 2.2, 0, Math.PI * 2); c.fill();
       }
-      if (g.story && g.story.stage < 4) { c.fillStyle = 'rgba(190,110,255,0.9)'; c.fillRect(g.level.gateX * sx - 1, 0, 2, H); }
+      for (const pt of g.level.portals) { c.fillStyle = 'rgba(150,220,255,0.9)'; c.fillRect(pt.x * sx - 1.5, 6, 3, H - 12); }
+      if (g.mapId === 'grove' && g.story && g.story.stage < 4) { c.fillStyle = 'rgba(190,110,255,0.9)'; c.fillRect(g.level.gateX * sx - 1, 0, 2, H); }
       for (const n of g.npcs) { c.fillStyle = '#7fe0ff'; c.beginPath(); c.arc(n.x * sx, (n.y - 8) * sy, 3, 0, Math.PI * 2); c.fill(); }
       c.strokeStyle = 'rgba(255,255,255,0.6)'; c.lineWidth = 1;
       c.strokeRect(g.camera.x * sx, 1, G.VW * sx, H - 2);

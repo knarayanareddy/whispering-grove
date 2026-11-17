@@ -131,6 +131,10 @@ const has = (f) => fs.existsSync(R + f);
     const n = await keyTrim('npc_elder.png', { height: 220 });
     await pose(n, 'npc_elder.png', 1, 1, 0);
   }
+  if (has('npc_mira.png')) {
+    const n = await keyTrim('npc_mira.png', { height: 200 });
+    await pose(n, 'npc_mira.png', 1, 1, 0);
+  }
   for (const f of fs.readdirSync(A).filter((x) => x.endsWith('.png'))) {
     const m = await sharp(A + '/' + f).metadata();
     console.log(f, m.width, m.height, fs.statSync(A + '/' + f).size);

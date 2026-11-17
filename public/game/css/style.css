@@ -177,3 +177,21 @@ html, body { margin: 0; height: 100%; background: #140d22; overflow: hidden; fon
 .card { width: 600px; }
 .card ul { font-size: 13px; line-height: 1.9; text-align: center; }
 .btnrow { display: flex; gap: 12px; justify-content: center; }
+
+/* ---- Phase 2-4 additions ---- */
+#fade { position: absolute; inset: 0; background: #0d0718; opacity: 0; pointer-events: none; transition: opacity .4s ease; z-index: 20; }
+#fade.on { opacity: 1; pointer-events: auto; }
+.rowi { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,.12); font-size: 13px; line-height: 1.35; }
+.rowi > span:last-child { text-align: right; flex: none; max-width: 52%; }
+.mb { cursor: pointer; font: 800 12px "Trebuchet MS", sans-serif; padding: 5px 10px; margin: 2px 3px; border-radius: 9px; border: 2px solid #e2bd73; color: #3a2400; background: linear-gradient(#ffe9a0, #f0b94a); }
+.mb:hover:not(:disabled) { filter: brightness(1.1); }
+.mb:disabled { opacity: .4; cursor: default; }
+.mb.sel { outline: 3px solid #9ad8ff; }
+.mcard small { color: #cdbfa6; }
+.mcard { width: 640px; max-height: 640px; }
+#mods { margin: 6px 0 10px; font-size: 12px; text-align: left; background: rgba(0,0,0,.25); border-radius: 10px; padding: 6px 12px; }
+#mods label { display: block; margin: 3px 0; cursor: pointer; }
+#mods summary { cursor: pointer; font-weight: 800; color: #ffe27a; }
+.big.sm { font-size: 13px; padding: 6px 14px; margin: 4px 3px; }
+#blessBox .mb { padding: 8px 12px; width: 190px; vertical-align: top; }
+#cloudMsg { min-height: 16px; font-size: 12px; }

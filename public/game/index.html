@@ -19,13 +19,13 @@
           <div class="bar hp"><div class="fill" id="hpFill"></div><span class="lbl">HP</span><span class="val" id="hpVal"></span></div>
           <div class="bar mp"><div class="fill" id="mpFill"></div><span class="lbl">MP</span><span class="val" id="mpVal"></span></div>
           <div class="bar exp"><div class="fill" id="expFill"></div><span class="lbl">EXP</span><span class="val" id="expVal"></span></div>
-          <div class="goldrow">Gold: <b id="gold">0</b></div>
+          <div class="goldrow">Gold: <b id="gold">0</b> &nbsp; <span id="potions"></span></div>
         </div>
       </div>
 
       <!-- top right: minimap -->
       <div id="hudTR" class="panel">
-        <div class="mapname">Whispering Grove</div>
+        <div class="mapname" id="mapName">Whispering Grove</div>
         <canvas id="minimap" width="220" height="64"></canvas>
       </div>
 
@@ -34,7 +34,7 @@
       <div id="bossBar" class="hidden"><div class="bn">Brambold, the Gloomcap Warden <span id="bossPhase"></span></div><div class="bb"><div id="bossGhost"></div><div id="bossFill"></div></div></div>
       <div id="chapterBanner"></div>
 
-      <div id="hint">Move: Arrows &nbsp; Jump: Space (x2) &nbsp; Drop: Down + Space &nbsp; Attack: Ctrl / A &nbsp; Skills: 1-5 &nbsp; Talk: E &nbsp; Quests: Q &nbsp; Pause: Esc</div>
+      <div id="hint">Move: Arrows &nbsp; Jump: Space (x2) &nbsp; Drop: Down + Space &nbsp; Attack: Ctrl / A &nbsp; Skills: 1-8 &nbsp; Talk/Enter: E &nbsp; Tonics: Z/X &nbsp; Quests: Q &nbsp; Pack: I &nbsp; Skills: K &nbsp; Codex: C &nbsp; Pause: Esc</div>
 
       <!-- bottom left: chat -->
       <div id="chat" class="panel"><div class="chatTitle">System</div><div id="chatLog"></div></div>
@@ -47,6 +47,7 @@
         <button id="btnInv" class="mbtn">Inventory</button>
         <button id="btnSkills" class="mbtn">Skills</button>
         <button id="btnQuests" class="mbtn">Quests</button>
+        <button id="btnCodex" class="mbtn">Codex</button>
         <button id="btnMap" class="mbtn">Map</button>
         <button id="btnMenu" class="mbtn">Menu</button>
       </div>
@@ -59,6 +60,7 @@
 
     <div id="modal" class="hidden"><div class="mcard"><h2 id="modalTitle"></h2><div id="modalBody"></div><button id="modalClose">Close (Q)</button></div></div>
     <div id="chapterCard" class="hidden"></div>
+    <div id="fade"></div>
 
     <div id="overlay">
       <div class="card">
@@ -71,11 +73,12 @@
           <ul>
             <li><b>Arrow keys</b> &ndash; walk &nbsp; <b>Space</b> &ndash; jump (x2) &nbsp; <b>Down + Space</b> &ndash; drop</li>
             <li><b>Ctrl / A</b> &ndash; attack &nbsp; <b>1 Slash &middot; 2 Fireball &middot; 3 Heal &middot; 4 Dash &middot; 5 Nova</b></li>
-            <li><b>E</b> &ndash; talk &nbsp; <b>Q</b> &ndash; quest log &nbsp; <b>Esc</b> &ndash; pause</li>
+            <li><b>E</b> &ndash; talk / enter gates &nbsp; <b>Z / X</b> &ndash; tonics &nbsp; <b>Q I K C M</b> &ndash; quests, pack, skills, codex, map</li>
           </ul>
-          <div class="btnrow"><button id="newBtn" class="big">New Game</button><button id="contBtn" class="big alt hidden">Continue</button></div>
+          <details id="mods"><summary>Hollow Mode (optional, +25% rewards each)</summary><label><input type="checkbox" id="modGlass"> Glass Cannon (you hit harder, they hit much harder)</label><label><input type="checkbox" id="modSwarm"> Swarm (double monsters in story maps)</label><label><input type="checkbox" id="modNoHeal"> No Heals (no regen, Heal, tonics or leech)</label><label><input type="checkbox" id="modMirror"> Mirrored Enemies (monsters are 20% faster)</label></details>
+          <div class="btnrow"><button id="newBtn" class="big">New Game</button><button id="contBtn" class="big alt hidden">Continue</button><button id="ngBtn" class="big alt hidden">New Game+</button></div>
         </div>
-        <div id="pauseBlock" class="hidden"><div class="btnrow"><button id="resumeBtn" class="big">Resume</button><button id="quitBtn" class="big alt">Save &amp; Quit</button></div></div>
+        <div id="pauseBlock" class="hidden"><div class="btnrow"><button id="resumeBtn" class="big">Resume</button><button id="quitBtn" class="big alt">Save &amp; Quit</button></div><div class="btnrow"><button id="cloudSaveBtn" class="big alt sm">Cloud Save</button><button id="cloudLoadBtn" class="big alt sm">Cloud Load</button><button id="boardBtn" class="big alt sm">Leaderboards</button></div><p id="cloudMsg" class="sub"></p></div>
         <div id="loadMsg">Loading...</div>
       </div>
     </div>
@@ -84,20 +87,27 @@
   <script src="js/AnimationManager.js"></script>
   <script src="js/InputManager.js"></script>
   <script src="js/Platform.js"></script>
+  <script src="js/Maps.js"></script>
   <script src="js/Level.js"></script>
   <script src="js/Camera.js"></script>
   <script src="js/Effects.js"></script>
   <script src="js/Player.js"></script>
   <script src="js/Enemy.js"></script>
   <script src="js/PickupManager.js"></script>
-  <script src="js/CombatManager.js"></script>
   <script src="js/Difficulty.js"></script>
+  <script src="js/Items.js"></script>
+  <script src="js/Progression.js"></script>
+  <script src="js/CombatManager.js"></script>
   <script src="js/Dialogue.js"></script>
   <script src="js/Boons.js"></script>
   <script src="js/NPC.js"></script>
   <script src="js/Boss.js"></script>
   <script src="js/Story.js"></script>
+  <script src="js/Quests.js"></script>
+  <script src="js/World.js"></script>
+  <script src="js/Cloud.js"></script>
   <script src="js/UI.js"></script>
+  <script src="js/Panels.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

@@ -38,13 +38,13 @@
     collect(it) {
       const p = this.player;
       if (it.type === 'exp') {
-        const val = Math.round(it.value * p.expMul), lv = p.addExp(val);
+        const val = Math.round(it.value * p.expMul * (1 + p.bonus.exp)), lv = p.addExp(val);
         this.fx.text(p.x, p.y - 95, '+' + val + ' EXP' + (p.expMul > 1 ? ' x2' : ''), 'exp');
         this.fx.burst(p.x, p.y - 35, { n: 6, colors: ['#9ad8ff', '#fff'], speed: 160, life: 0.4, size: 4, grav: -50, glow: true });
         if (lv && G.onLevelUp) G.onLevelUp();
       } else {
-        p.gold += it.value;
-        this.fx.text(p.x, p.y - 80, '+' + it.value + ' Gold', 'gold');
+        const gv = Math.max(1, Math.round(it.value * (1 + p.bonus.gold))); p.gold += gv;
+        this.fx.text(p.x, p.y - 80, '+' + gv + ' Gold', 'gold');
         this.fx.burst(p.x, p.y - 35, { n: 5, colors: ['#ffe27a', '#fff6c0'], speed: 150, life: 0.4, size: 3, grav: 100, glow: true, shape: 'star' });
       }
     }

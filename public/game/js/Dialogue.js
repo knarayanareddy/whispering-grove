@@ -8,11 +8,12 @@
     orrin: { name: 'Elder Orrin', img: 'Assets/npc_elder.png', cls: 'orrin' },
     warden: { name: 'Brambold', img: 'Assets/boss_gloomcap_idle.png', cls: 'warden' }
   };
-  const CPS = 52; // characters per second
+  const CPS = 52;
+  const portraitSrc = (img) => { if (!img) return null; if (img.indexOf('canvas:') === 0) { const c = G.Anim.images[img.slice(7)]; return c && c.toDataURL ? c.toDataURL() : null; } return img; }; // characters per second
 
   const Dlg = {
     active: false, queue: [], line: null, shown: 0, done: false, choiceOpen: false, onDone: null, cinematic: false,
-    el: null,
+    el: null, speakers: SPEAKERS,
 
     init: function () {
       this.el = { root: $('dialogue'), portrait: $('dlgPortrait'), name: $('dlgName'), text: $('dlgText'), hint: $('dlgHint'), choices: $('dlgChoices') };
@@ -38,7 +39,7 @@
       e.root.className = 'dlg-' + (sp.cls || 'narrator') + (this.cinematic ? ' cinematic' : '');
       e.name.textContent = sp.name;
       e.portrait.className = 'portraitBox ' + (sp.cls || '');
-      e.portrait.innerHTML = sp.img ? '<img src="' + sp.img + '" alt="">' : (sp.cls === 'lumi' ? '<div class="lumiGlow"></div>' : '');
+      const psrc = portraitSrc(sp.img); e.portrait.innerHTML = psrc ? '<img src="' + psrc + '" alt="">' : (sp.cls === 'lumi' ? '<div class="lumiGlow"></div>' : '');
       e.text.textContent = ''; e.choices.innerHTML = ''; e.hint.style.visibility = 'hidden';
     },
 

@@ -91,7 +91,7 @@
       try {
         const p = game.player, st = game.story;
         localStorage.setItem(SAVE_KEY, JSON.stringify({
-          v: 1, diff: G.Diff.cur.id, savedAt: Date.now(),
+          v: 2, ext: game.world ? game.world.serialize() : null, diff: G.Diff.cur.id, savedAt: Date.now(),
           player: { lvl: p.lvl, exp: p.exp, expNext: p.expNext, maxHp: p.maxHp, maxMp: p.maxMp, hp: p.hp, mp: p.mp, gold: p.gold, kills: p.kills, deaths: p.deaths || 0 },
           story: { stage: st.stage, prog: st.prog, taken: st.motes.map((m) => !!m.taken), flags: st.flags, tips: st.tips, playTime: st.playTime, bossIntroSeen: st.bossIntroSeen, boons: game.boons.collected }
         }));
@@ -195,7 +195,7 @@
     onRespawn() {
       const g = this.g, p = g.player;
       p.limitMin = 0;
-      if (this.stage === 4 && g.boss && g.boss.state !== 'gone') {
+      if (this.stage === 4 && g.mapId === 'grove' && g.boss && g.boss.state !== 'gone') {
         g.boss.resetFight(); this.bossStarted = false;
         for (let i = g.enemies.length - 1; i >= 0; i--) if (g.enemies[i].summoned) g.enemies.splice(i, 1);
         g.companion.speak('Brambold is resting again. Try dodging the waves with a jump, and watch the purple circles!', 5);
@@ -218,6 +218,7 @@
     /* ---- per frame ---- */
     update(dt) {
       const g = this.g, p = g.player, L = g.level; this.t += dt; this.playTime += dt;
+      if (g.mapId && g.mapId !== 'grove') { p.limitMax = Infinity; this.saveTimer -= dt; if (this.saveTimer <= 0) { this.saveTimer = 20; if (!p.dead) this.save(); } return; }
       p.limitMax = this.stage >= 4 ? Infinity : L.gateX - 18;
       this.gateAlpha = A.approach(this.gateAlpha, this.stage >= 4 ? 0 : 1, 2.5, dt);
 
@@ -252,7 +253,7 @@
     }
 
     drawWorld(ctx, camX, t) {
-      const L = this.g.level;
+      const L = this.g.level; if (this.g.mapId && this.g.mapId !== 'grove') return;
       // blight gate
       if (this.gateAlpha > 0.01) {
         const x = L.gateX - camX; if (x > -80 && x < G.VW + 80) {

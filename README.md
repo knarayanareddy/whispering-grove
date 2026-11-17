@@ -1,29 +1,33 @@
 # Whispering Grove: The Last Lantern
 
-A MapleStory-inspired 2D side-scrolling action game with a Studio Ghibli forest feel, built in plain HTML / CSS / JavaScript (canvas) and served from a Next.js shell.
+A MapleStory-inspired 2D side-scrolling action RPG with a Studio Ghibli forest feel, built in plain HTML / CSS / JavaScript (canvas) and served from a Next.js shell.
 
-- **Play:** run the app and open `/` (redirects to `/game/index.html`), or open `public/game/index.html` directly.
-- **Full plan:** see [`docs/ROADMAP.md`](docs/ROADMAP.md): story bible, difficulty tables, power-ups and all 4 phases.
+* **Play:** run the app and open `/` (redirects to `/game/index.html`), or open `public/game/index.html` directly (cloud features need the app).
+* **Plan and status:** [docs/ROADMAP.md](docs/ROADMAP.md): story bible, difficulty tables, phases 1-4 (built) and phases 5-8 (planned).
 
-## Phase 1: The Waking Grove (built)
-- Title screen, **4 difficulty tiers** (Cozy / Adventurer / Heroic / Nightmare), Continue + autosave
-- Narrated prologue, **dialogue with choices**, **5-quest chain**, quest tracker, journal
-- **Elder Orrin**, **Lumi** the companion, hidden **Whisper Motes**, the **Blight Gate**
-- **6 Boons** (timed power-ups), **Elite monsters**
-- **Boss: Brambold, the Gloomcap Warden** (3 phases, telegraphed attacks, summons)
-- Chapter-complete card
+## What is in the game
+* **Six chapters** across 7 maps: Whispering Grove, Orrin's Hollow Tree (hub), Mistmarsh, Sunken Hollow, Ember Peaks, Cloud Orchard and the Heartwood.
+* **25 quests**, 8 NPCs, branching dialogue, Sorrel's letters, 3 endings (plus a fuller ending for merciful, thorough players).
+* **6 bosses**: Brambold, the Drowned Warden, Marrow, Magmaw, Stormwing Sovereign and Sorrel (4 phases).
+* **The Wilds**: endless seeded expeditions (6 biomes x 5 tiers, random modifiers, Warden's Cache) plus a Daily Trial.
+* **Difficulty**: Cozy / Adventurer / Heroic / Nightmare, optional Hollow Mode modifiers, New Game+.
+* **Power**: gear with 5 rarities, shops and a forge, potions, 6 Boons with synergy, relics, a skill tree (8 skills), 3 classes with ultimates, Blessings.
+* **Online**: cloud saves and leaderboards (Postgres + Drizzle).
 
 ## Controls
 | Key | Action |
-|---|---|
+| --- | --- |
 | Arrow keys | Move |
 | Space (x2) | Jump / double jump |
 | Down + Space | Drop through a platform |
 | Ctrl / A | Basic attack |
-| 1 to 5 | Slash, Fireball, Heal, Dash, Nova |
-| E (or Up) | Talk / advance dialogue |
-| Q | Quest log |
-| Esc | Pause |
+| 1 to 8 | Slash, Fireball, Heal, Dash, Ultimate, Thorn Snare, Lumi's Spark, Gale Step |
+| E (or Up) | Talk, enter gates, open caches |
+| Z / X | Heart Tonic / Moon Dew |
+| Q / I / K / C / M | Quests / Inventory / Skills / Codex / Map |
+| Esc | Pause (cloud save, leaderboards) |
 
-## Art pipeline
-Raw generated art lives in `art-source/` (flat magenta backgrounds). Run `node scripts/process-assets.js` (needs `sharp`) to chroma-key it into transparent PNGs in `public/game/Assets/` and derive extra poses.
+## Development
+* `node scripts/process-assets.js` turns raw art in `art-source/` (magenta-keyed) into transparent PNGs in `public/game/Assets/`.
+* `node scripts/smoke-test.js` boots the game headlessly and exercises maps, quests, bosses, shops, Wilds, endings, saves and New Game+.
+* Backend: `src/app/api/save` and `src/app/api/scores`, tables in `src/db/schema.ts` (`npx drizzle-kit push`).

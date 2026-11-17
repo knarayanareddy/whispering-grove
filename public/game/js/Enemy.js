@@ -4,28 +4,45 @@
   const TYPES = {
     slime: { name: 'Leaf Slime', w: 54, h: 44, scale: 0.26, hp: 40, dmg: 8, range: 46, detect: 230, patrol: 45, chase: 105, exp: 12, gold: [3, 8], lift: 0 },
     mushroom: { name: 'Grumpy Shroom', w: 56, h: 58, scale: 0.32, hp: 75, dmg: 12, range: 52, detect: 260, patrol: 55, chase: 125, exp: 20, gold: [6, 14], lift: 0 },
-    spirit: { name: 'Wisp Spirit', w: 50, h: 56, scale: 0.30, hp: 55, dmg: 10, range: 120, detect: 300, patrol: 70, chase: 110, exp: 16, gold: [4, 10], lift: 16 }
+    spirit: { name: 'Wisp Spirit', w: 50, h: 56, scale: 0.30, hp: 55, dmg: 10, range: 120, detect: 300, patrol: 70, chase: 110, exp: 16, gold: [4, 10], lift: 16 },
+    bogtoad: { name: 'Bog Toad', w: 56, h: 46, scale: 0.27, hp: 60, dmg: 11, range: 250, detect: 320, patrol: 40, chase: 90, exp: 20, gold: [5, 12], lift: 0, shoot: true, shotCol: '#9be07a' },
+    gloweel: { name: 'Glow Eel', w: 50, h: 56, scale: 0.30, hp: 70, dmg: 12, range: 125, detect: 330, patrol: 75, chase: 120, exp: 22, gold: [5, 12], lift: 18 },
+    lanternbeetle: { name: 'Lantern Beetle', w: 56, h: 58, scale: 0.32, hp: 90, dmg: 15, range: 62, detect: 280, patrol: 55, chase: 135, exp: 26, gold: [7, 15], lift: 0, lunge: 560 },
+    mossgolem: { name: 'Moss Golem', w: 72, h: 76, scale: 0.42, hp: 170, dmg: 20, range: 66, detect: 250, patrol: 32, chase: 78, exp: 44, gold: [10, 22], lift: 0 },
+    thornsprite: { name: 'Thorn Sprite', w: 54, h: 44, scale: 0.26, hp: 58, dmg: 13, range: 270, detect: 340, patrol: 50, chase: 100, exp: 24, gold: [6, 14], lift: 0, shoot: true, shotCol: '#ff8ac0' },
+    hollowwisp: { name: 'Hollow Wisp', w: 50, h: 56, scale: 0.30, hp: 80, dmg: 15, range: 300, detect: 380, patrol: 65, chase: 105, exp: 30, gold: [7, 16], lift: 22, shoot: true, shotCol: '#b48aff' },
+    emberimp: { name: 'Ember Imp', w: 54, h: 44, scale: 0.26, hp: 72, dmg: 16, range: 58, detect: 300, patrol: 60, chase: 150, exp: 30, gold: [8, 17], lift: 0, lunge: 600 },
+    cinderspirit: { name: 'Cinder Spirit', w: 50, h: 56, scale: 0.30, hp: 88, dmg: 16, range: 135, detect: 320, patrol: 70, chase: 120, exp: 34, gold: [8, 18], lift: 18 },
+    lavagolem: { name: 'Lava Golem', w: 72, h: 76, scale: 0.42, hp: 200, dmg: 24, range: 68, detect: 260, patrol: 32, chase: 82, exp: 56, gold: [14, 28], lift: 0 },
+    cloudpuff: { name: 'Cloud Puff', w: 54, h: 44, scale: 0.26, hp: 76, dmg: 15, range: 50, detect: 280, patrol: 55, chase: 115, exp: 32, gold: [8, 18], lift: 8 },
+    stormsprite: { name: 'Storm Sprite', w: 50, h: 56, scale: 0.30, hp: 92, dmg: 18, range: 290, detect: 380, patrol: 75, chase: 115, exp: 40, gold: [10, 22], lift: 20, shoot: true, shotCol: '#ffe96b' },
+    galeshroom: { name: 'Gale Shroom', w: 56, h: 58, scale: 0.32, hp: 125, dmg: 20, range: 62, detect: 280, patrol: 55, chase: 140, exp: 44, gold: [10, 22], lift: 0, lunge: 540 },
+    shade: { name: 'Memory Shade', w: 50, h: 56, scale: 0.30, hp: 105, dmg: 21, range: 300, detect: 380, patrol: 60, chase: 110, exp: 52, gold: [12, 26], lift: 20, shoot: true, shotCol: '#c9b8ff' },
+    echo: { name: 'Grief Echo', w: 54, h: 44, scale: 0.26, hp: 115, dmg: 23, range: 56, detect: 300, patrol: 60, chase: 150, exp: 54, gold: [12, 26], lift: 0, lunge: 560 },
+    griefcap: { name: 'Griefcap', w: 72, h: 76, scale: 0.42, hp: 230, dmg: 29, range: 68, detect: 260, patrol: 32, chase: 84, exp: 80, gold: [16, 32], lift: 0 }
   };
 
   class Enemy {
     constructor(spawn) {
       this.type = spawn.type; this.base = TYPES[spawn.type]; this.s = this.base; this.b = spawn.bounds;
       this.w = this.s.w; this.h = this.s.h; this.maxHp = this.s.hp; this.elite = false; this.summoned = false; this.noRespawn = false;
+      this.power = spawn.power || 1; this.eliteAdd = spawn.eliteAdd || 0; this.goldMulX = spawn.goldMul || 1;
       this.cycler = new A.FrameCycler(['idle', 'walk'], 5);
       this.t = Math.random() * 10;
       this.reset(true);
     }
     /* difficulty + elite scaling, re-rolled on every (re)spawn */
     rollStats() {
-      const D = G.Diff.cur, base = this.base;
-      this.elite = Math.random() < D.eliteChance;
-      const e = this.elite, k = e ? 1.25 : 1, s = Object.assign({}, base);
+      const D = G.Diff.cur, base = this.base, M = G.Mods || {}, pw = this.power, ng = 1 + 0.35 * (M.ng || 0);
+      this.elite = Math.random() < D.eliteChance + this.eliteAdd;
+      const e = this.elite, k = e ? 1.25 : 1, s = Object.assign({}, base), rm = M.reward || 1, spd = (M.mirror ? 1.2 : 1);
       s.name = (e ? 'Elite ' : '') + base.name;
-      s.hp = Math.round(base.hp * D.hpMul * (e ? 2.4 : 1));
-      s.dmg = Math.round(base.dmg * D.dmgMul * (e ? 1.4 : 1));
-      s.detect = base.detect * D.detectMul; s.patrol = base.patrol * D.speedMul; s.chase = base.chase * D.speedMul;
-      s.exp = Math.round(base.exp * D.expMul * (e ? 2.5 : 1));
-      s.gold = [Math.round(base.gold[0] * D.goldMul * (e ? 2 : 1)), Math.round(base.gold[1] * D.goldMul * (e ? 2 : 1))];
+      s.hp = Math.round(base.hp * D.hpMul * pw * ng * (e ? 2.4 : 1));
+      s.dmg = Math.round(base.dmg * D.dmgMul * (1 + (pw - 1) * 0.55) * Math.pow(ng, 0.6) * (e ? 1.4 : 1) * (M.glass ? 1.8 : 1));
+      s.detect = base.detect * D.detectMul; s.patrol = base.patrol * D.speedMul * spd; s.chase = base.chase * D.speedMul * spd;
+      s.exp = Math.round(base.exp * D.expMul * pw * (1 + 0.25 * (M.ng || 0)) * rm * (e ? 2.5 : 1));
+      const gm = D.goldMul * pw * rm * this.goldMulX * (e ? 2 : 1);
+      s.gold = [Math.round(base.gold[0] * gm), Math.round(base.gold[1] * gm)];
       s.w = Math.round(base.w * k); s.h = Math.round(base.h * k); s.scale = base.scale * k;
       this.s = s; this.w = s.w; this.h = s.h; this.maxHp = s.hp;
     }
@@ -62,6 +79,7 @@
         return;
       }
       this.flash = Math.max(0, this.flash - dt); this.stun -= dt; this.cooldown -= dt;
+      if (this.rootT > 0) { this.rootT -= dt; this.stun = Math.max(this.stun, 0.05); }
       if (this.alpha < 1) this.alpha = Math.min(1, this.alpha + dt * 1.6);
       const s = this.s, b = this.b;
       const dx = p.x - this.x, dy = p.y - this.y, adx = Math.abs(dx);
@@ -95,9 +113,11 @@
         if (this.at < wind) { const k = this.at / wind; tsx = 1 + 0.14 * k; tsy = 1 - 0.14 * k; trot = -0.18 * k; }
         else if (!this.struck) {
           this.struck = true; this.sx = 0.86; this.sy = 1.18;
-          if (this.type === 'spirit') game.fx.ring(this.x, this.y - 30, s.range, '#b8f0ff', 0.35, 7);
-          else { this.vx = this.facing * 230; game.fx.burst(this.x + this.facing * 30, this.cy, { n: 5, colors: ['#fff', '#ffe9a0'], speed: 160, life: 0.25, size: 4, grav: 0, glow: true }); }
-          if (adx < s.range + p.w / 2 && Math.abs(dy) < (this.type === 'spirit' ? 95 : 70)) game.combat.hurtPlayer(s.dmg + Math.floor(Math.random() * 4), this.x);
+          if (s.shoot) game.fx.burst(this.x + this.facing * 24, this.cy, { n: 6, colors: [s.shotCol || '#fff', '#fff'], speed: 160, life: 0.3, size: 4, grav: 0, glow: true });
+          else if (s.lift) game.fx.ring(this.x, this.y - 30, s.range, '#b8f0ff', 0.35, 7);
+          else { this.vx = this.facing * (s.lunge || 230); game.fx.burst(this.x + this.facing * 30, this.cy, { n: 5, colors: ['#fff', '#ffe9a0'], speed: 160, life: 0.25, size: 4, grav: 0, glow: true }); }
+          if (s.shoot) game.combat.shots.push({ x: this.x + this.facing * 24, y: this.cy, vx: this.facing * 300, dmg: s.dmg, life: 0, col: s.shotCol || '#c39bff' });
+          else if (adx < s.range + p.w / 2 && Math.abs(dy) < (s.lift ? 95 : 70)) game.combat.hurtPlayer(s.dmg + Math.floor(Math.random() * 4), this.x);
         }
         if (this.at >= wind + 0.35) { this.state = 'chase'; this.cooldown = 1.2; }
       }
@@ -125,7 +145,7 @@
         ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(ex, ey, this.w * 1.1, 0, Math.PI * 2); ctx.fill(); ctx.restore();
       }
       ctx.save();
-      ctx.globalAlpha = Math.max(0, this.alpha) * (this.type === 'spirit' ? 0.92 : 1);
+      ctx.globalAlpha = Math.max(0, this.alpha) * (s.lift ? 0.92 : 1);
       if (!hover) { ctx.save(); ctx.globalAlpha *= 0.25; ctx.fillStyle = '#1a0f2a'; ctx.beginPath(); ctx.ellipse(this.x - camX, this.y + 1, this.w * 0.5, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
       ctx.translate(this.x - camX, this.y - hover);
       ctx.scale(this.facing, 1); ctx.rotate(this.rot); ctx.scale(this.sx * (1 - br), this.sy * (1 + br));
