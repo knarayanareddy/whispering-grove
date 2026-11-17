@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Whispering Grove - Side-Scrolling Action Prototype</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="stage">
+    <canvas id="game" width="1280" height="720"></canvas>
+
+    <div id="hud">
+      <!-- top left: portrait + bars -->
+      <div id="hudTL" class="panel">
+        <div class="portrait"><img src="Assets/player_idle.png" alt="Player portrait"></div>
+        <div class="stats">
+          <div class="lvlrow">Level <b id="lvl">1</b> <span class="cls">Apprentice Mage</span></div>
+          <div class="bar hp"><div class="fill" id="hpFill"></div><span class="lbl">HP</span><span class="val" id="hpVal"></span></div>
+          <div class="bar mp"><div class="fill" id="mpFill"></div><span class="lbl">MP</span><span class="val" id="mpVal"></span></div>
+          <div class="bar exp"><div class="fill" id="expFill"></div><span class="lbl">EXP</span><span class="val" id="expVal"></span></div>
+          <div class="goldrow">Gold: <b id="gold">0</b></div>
+        </div>
+      </div>
+
+      <!-- top right: minimap -->
+      <div id="hudTR" class="panel">
+        <div class="mapname">Whispering Grove</div>
+        <canvas id="minimap" width="220" height="64"></canvas>
+      </div>
+
+      <div id="hint">Move: Arrows &nbsp; Jump: Space (x2) &nbsp; Drop: Down + Space &nbsp; Attack: Ctrl / A &nbsp; Skills: 1-5 &nbsp; Pause: Esc</div>
+
+      <!-- bottom left: chat -->
+      <div id="chat" class="panel"><div class="chatTitle">System</div><div id="chatLog"></div></div>
+
+      <!-- bottom center: skill bar -->
+      <div id="skillbar" class="panel"></div>
+
+      <!-- bottom right: buttons -->
+      <div id="menuBtns">
+        <button id="btnInv" class="mbtn">Inventory</button>
+        <button id="btnSkills" class="mbtn">Skills</button>
+        <button id="btnQuests" class="mbtn">Quests</button>
+        <button id="btnMap" class="mbtn">Map</button>
+        <button id="btnMenu" class="mbtn">Menu</button>
+      </div>
+
+      <div id="levelFlash"></div>
+      <div id="banner"></div>
+    </div>
+
+    <div id="overlay">
+      <div class="card">
+        <h1 id="overlayTitle">Whispering Grove</h1>
+        <p class="sub">A MapleStory-inspired side-scrolling action prototype</p>
+        <ul>
+          <li><b>Arrow keys</b> &ndash; walk</li>
+          <li><b>Space</b> &ndash; jump, press again in the air to double jump</li>
+          <li><b>Down + Space</b> &ndash; drop through a platform</li>
+          <li><b>Ctrl / A</b> &ndash; basic attack</li>
+          <li><b>1 Slash &middot; 2 Fireball &middot; 3 Heal &middot; 4 Dash &middot; 5 Nova</b> &ndash; skills (cost MP)</li>
+        </ul>
+        <button id="startBtn" disabled>Start</button>
+        <div id="loadMsg">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/AnimationManager.js"></script>
+  <script src="js/InputManager.js"></script>
+  <script src="js/Platform.js"></script>
+  <script src="js/Level.js"></script>
+  <script src="js/Camera.js"></script>
+  <script src="js/Effects.js"></script>
+  <script src="js/Player.js"></script>
+  <script src="js/Enemy.js"></script>
+  <script src="js/PickupManager.js"></script>
+  <script src="js/CombatManager.js"></script>
+  <script src="js/UI.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
