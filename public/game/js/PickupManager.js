@@ -38,8 +38,8 @@
     collect(it) {
       const p = this.player;
       if (it.type === 'exp') {
-        const lv = p.addExp(it.value);
-        this.fx.text(p.x, p.y - 95, '+' + it.value + ' EXP', 'exp');
+        const val = Math.round(it.value * p.expMul), lv = p.addExp(val);
+        this.fx.text(p.x, p.y - 95, '+' + val + ' EXP' + (p.expMul > 1 ? ' x2' : ''), 'exp');
         this.fx.burst(p.x, p.y - 35, { n: 6, colors: ['#9ad8ff', '#fff'], speed: 160, life: 0.4, size: 4, grav: -50, glow: true });
         if (lv && G.onLevelUp) G.onLevelUp();
       } else {

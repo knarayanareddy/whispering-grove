@@ -9,13 +9,28 @@
 
   class Enemy {
     constructor(spawn) {
-      this.type = spawn.type; this.s = TYPES[spawn.type]; this.b = spawn.bounds;
-      this.w = this.s.w; this.h = this.s.h; this.maxHp = this.s.hp;
+      this.type = spawn.type; this.base = TYPES[spawn.type]; this.s = this.base; this.b = spawn.bounds;
+      this.w = this.s.w; this.h = this.s.h; this.maxHp = this.s.hp; this.elite = false; this.summoned = false; this.noRespawn = false;
       this.cycler = new A.FrameCycler(['idle', 'walk'], 5);
       this.t = Math.random() * 10;
       this.reset(true);
     }
+    /* difficulty + elite scaling, re-rolled on every (re)spawn */
+    rollStats() {
+      const D = G.Diff.cur, base = this.base;
+      this.elite = Math.random() < D.eliteChance;
+      const e = this.elite, k = e ? 1.25 : 1, s = Object.assign({}, base);
+      s.name = (e ? 'Elite ' : '') + base.name;
+      s.hp = Math.round(base.hp * D.hpMul * (e ? 2.4 : 1));
+      s.dmg = Math.round(base.dmg * D.dmgMul * (e ? 1.4 : 1));
+      s.detect = base.detect * D.detectMul; s.patrol = base.patrol * D.speedMul; s.chase = base.chase * D.speedMul;
+      s.exp = Math.round(base.exp * D.expMul * (e ? 2.5 : 1));
+      s.gold = [Math.round(base.gold[0] * D.goldMul * (e ? 2 : 1)), Math.round(base.gold[1] * D.goldMul * (e ? 2 : 1))];
+      s.w = Math.round(base.w * k); s.h = Math.round(base.h * k); s.scale = base.scale * k;
+      this.s = s; this.w = s.w; this.h = s.h; this.maxHp = s.hp;
+    }
     reset(first) {
+      this.rollStats();
       const b = this.b;
       this.x = A.rand(b.x1 + this.w, Math.max(b.x1 + this.w, b.x2 - this.w)); this.y = b.y;
       this.hp = this.maxHp; this.vx = 0; this.facing = Math.random() < 0.5 ? -1 : 1; this.dir = this.facing;
@@ -39,7 +54,7 @@
 
     update(dt, p, game) {
       const A_ = A; this.t += dt;
-      if (this.state === 'gone') { this.respawn -= dt; if (this.respawn <= 0) this.reset(false); return; }
+      if (this.state === 'gone') { if (this.noRespawn) { this.remove = true; return; } this.respawn -= dt; if (this.respawn <= 0) this.reset(false); return; }
       if (this.state === 'dying') {
         this.alpha -= dt / 0.9; this.vx = A_.approach(this.vx, 0, 5, dt); this.x += this.vx * dt;
         this.sy = A_.approach(this.sy, 0.6, 3, dt); this.sx = A_.approach(this.sx, 1.2, 3, dt); this.rot += dt * 2 * this.facing * -1;
@@ -102,6 +117,13 @@
       const dw = img.width * s.scale, dh = img.height * s.scale;
       const hover = s.lift ? s.lift + Math.sin(this.t * 3) * 5 : 0;
       const br = this.state === 'attack' ? 0 : Math.sin(this.t * 3.2) * 0.025;
+      if (this.elite && this.alive) {
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        const ex = this.x - camX, ey = this.cy, pul = 0.3 + 0.12 * Math.sin(this.t * 5);
+        const eg = ctx.createRadialGradient(ex, ey, 6, ex, ey, this.w * 1.1);
+        eg.addColorStop(0, 'rgba(255,200,90,' + pul + ')'); eg.addColorStop(1, 'rgba(255,120,200,0)');
+        ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(ex, ey, this.w * 1.1, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      }
       ctx.save();
       ctx.globalAlpha = Math.max(0, this.alpha) * (this.type === 'spirit' ? 0.92 : 1);
       if (!hover) { ctx.save(); ctx.globalAlpha *= 0.25; ctx.fillStyle = '#1a0f2a'; ctx.beginPath(); ctx.ellipse(this.x - camX, this.y + 1, this.w * 0.5, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
@@ -112,6 +134,10 @@
       if (this.alive && this.state === 'attack' && this.at < 0.5) {
         ctx.save(); ctx.fillStyle = '#ff4a4a'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.font = '900 24px "Trebuchet MS", sans-serif'; ctx.textAlign = 'center';
         ctx.strokeText('!', this.x - camX, this.top - 8); ctx.fillText('!', this.x - camX, this.top - 8); ctx.restore();
+      }
+      if (this.alive && this.elite) {
+        ctx.save(); ctx.textAlign = 'center'; ctx.font = '800 11px "Trebuchet MS", sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = '#4a2a00'; ctx.fillStyle = '#ffd96b';
+        ctx.strokeText('ELITE', this.x - camX, this.top - 24); ctx.fillText('ELITE', this.x - camX, this.top - 24); ctx.restore();
       }
       if (this.alive && this.hp < this.maxHp) {
         const bw = 46, bx = this.x - camX - bw / 2, by = this.top - 16;

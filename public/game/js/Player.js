@@ -15,7 +15,9 @@
       this.state = 'idle'; this.stateTime = 0;
       // stats (deliberately NOT full at start)
       this.lvl = 1; this.maxHp = 120; this.hp = 72; this.maxMp = 60; this.mp = 38;
-      this.exp = 12; this.expNext = 50; this.gold = 0; this.kills = 0;
+      this.exp = 12; this.expNext = 50; this.gold = 0; this.kills = 0; this.deaths = 0;
+      // story/boon modifiers
+      this.limitMin = 0; this.limitMax = Infinity; this.shield = 0; this.dmgMul = 1; this.speedMul = 1; this.jumpMul = 1; this.mpCostMul = 1; this.mpRegenMul = 1; this.expMul = 1;
       this.action = null; this.hitTimer = 0; this.invuln = 0; this.dead = false; this.deadTimer = 0;
       // visual interpolation values
       this.sx = 1; this.sy = 1; this.rot = 0; this.offX = 0; this.alpha = 1; this.wasDouble = false;
@@ -23,7 +25,7 @@
       this.t = 0;
     }
 
-    get atk() { return 8 + this.lvl * 3; }
+    get atk() { return (8 + this.lvl * 3) * this.dmgMul * G.Diff.cur.playerDmg; }
 
     addExp(n) {
       this.exp += n; let leveled = false;
@@ -39,6 +41,11 @@
 
     takeDamage(dmg, fromX) {
       if (this.dead || this.invuln > 0 || this.dashTimer > 0) return false;
+      this.lastTaken = dmg;
+      if (this.shield > 0) { // Bloom Shield soaks damage first
+        const soak = Math.min(this.shield, dmg); this.shield -= soak; dmg -= soak; this.lastTaken = dmg;
+        if (dmg <= 0) { this.invuln = 0.6; this.sx = 1.12; this.sy = 0.9; return true; }
+      }
       this.hp -= dmg; this.hitTimer = 0.38; this.invuln = 1.2; this.action = null;
       const dir = this.x < fromX ? -1 : 1;
       this.vx = dir * 280; this.vy = -380; this.grounded = false; this.groundPlat = null;
@@ -49,20 +56,21 @@
     }
 
     respawn() {
-      this.dead = false; this.hp = Math.round(this.maxHp * 0.5); this.mp = Math.round(this.maxMp * 0.5);
-      this.x = this.level.playerStart.x; this.y = this.level.playerStart.y; this.vx = this.vy = 0;
+      const D = G.Diff.cur, cp = this.level.checkpoint || this.level.playerStart;
+      this.dead = false; this.hp = Math.max(1, Math.round(this.maxHp * D.respawnHp)); this.mp = Math.round(this.maxMp * 0.5); this.deaths++;
+      this.x = cp.x; this.y = cp.y; this.shield = 0; this.vx = this.vy = 0;
       this.grounded = true; this.groundPlat = this.level.ground; this.invuln = 2; this.rot = 0; this.alpha = 1;
-      this.gold = Math.floor(this.gold * 0.9);
+      this.gold = Math.floor(this.gold * (1 - D.deathGoldLoss));
       if (G.onRespawn) G.onRespawn();
     }
 
     doJump(fx) {
-      this.vy = JUMP; this.grounded = false; this.groundPlat = null; this.jumpsUsed = 1; this.coyote = 0; this.jumpBuf = 0;
+      this.vy = JUMP * this.jumpMul; this.grounded = false; this.groundPlat = null; this.jumpsUsed = 1; this.coyote = 0; this.jumpBuf = 0;
       this.sx = 0.78; this.sy = 1.28;
       fx.burst(this.x, this.y, { n: 6, colors: ['#efe3c2', '#cdbd95'], speed: 120, life: 0.35, size: 4, grav: 80, up: 20 });
     }
     doDouble(fx, dir) {
-      this.vy = DJUMP; this.jumpsUsed = 2; this.dblTimer = 0.42;
+      this.vy = DJUMP * this.jumpMul; this.jumpsUsed = 2; this.dblTimer = 0.42;
       if (dir) this.vx = A.clamp(this.vx + dir * 90, -MAXSPEED * 1.1, MAXSPEED * 1.1);
       this.sx = 0.85; this.sy = 1.2;
       fx.burst(this.x, this.y - 8, { n: 14, colors: ['#bdf3ff', '#ffffff', '#fff3a0'], speed: 240, life: 0.5, size: 5, grav: 150, shape: 'star', glow: true, angle: Math.PI / 2, spread: 1.2 });
@@ -92,8 +100,8 @@
         return;
       }
 
-      this.mp = Math.min(this.maxMp, this.mp + 2.4 * dt);
-      this.hp = Math.min(this.maxHp, this.hp + 0.5 * dt);
+      this.mp = Math.min(this.maxMp, this.mp + 2.4 * this.mpRegenMul * dt);
+      this.hp = Math.min(this.maxHp, this.hp + 0.5 * G.Diff.cur.regenMul * dt);
 
       const left = input.isDown('ArrowLeft'), right = input.isDown('ArrowRight');
       let dir = (right ? 1 : 0) - (left ? 1 : 0);
@@ -106,7 +114,7 @@
       } else if (stunned) {
         this.vx = A.approach(this.vx, 0, 3, dt);
       } else {
-        const cap = MAXSPEED * (acting && this.grounded ? 0.2 : 1);
+        const cap = MAXSPEED * this.speedMul * (acting && this.grounded ? 0.2 : 1);
         const target = dir * cap;
         let acc;
         if (dir !== 0) { acc = this.grounded ? 2800 : 1900; if (this.grounded && Math.sign(this.vx) === -dir) acc = 4200; }
@@ -164,8 +172,9 @@
           } else this.y = newY;
         } else this.y = newY;
       }
-      this.x = A.clamp(this.x + this.vx * dt, this.w / 2, this.level.width - this.w / 2);
-      if (this.x <= this.w / 2 || this.x >= this.level.width - this.w / 2) this.vx = 0;
+      const lo = Math.max(this.w / 2, this.limitMin), hi = Math.min(this.level.width - this.w / 2, this.limitMax);
+      this.x = A.clamp(this.x + this.vx * dt, lo, hi);
+      if (this.x <= lo || this.x >= hi) this.vx = 0;
     }
 
     animate(dt) {

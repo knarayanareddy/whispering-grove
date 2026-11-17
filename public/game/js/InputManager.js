@@ -1,6 +1,6 @@
 /* InputManager: keyboard state + buffered "just pressed" events. */
 (function (G) {
-  const BLOCK = ['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'ControlLeft', 'ControlRight', 'KeyA'];
+  const BLOCK = ['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'ControlLeft', 'ControlRight', 'KeyA', 'KeyE', 'Enter'];
 
   class InputManager {
     constructor() {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Whispering Grove - Side-Scrolling Action Prototype</title>
+  <title>Whispering Grove - The Last Lantern</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -15,7 +15,7 @@
       <div id="hudTL" class="panel">
         <div class="portrait"><img src="Assets/player_idle.png" alt="Player portrait"></div>
         <div class="stats">
-          <div class="lvlrow">Level <b id="lvl">1</b> <span class="cls">Apprentice Mage</span></div>
+          <div class="lvlrow">Level <b id="lvl">1</b> <span class="cls">Apprentice Mage</span> <span id="diffBadge" class="badge"></span></div>
           <div class="bar hp"><div class="fill" id="hpFill"></div><span class="lbl">HP</span><span class="val" id="hpVal"></span></div>
           <div class="bar mp"><div class="fill" id="mpFill"></div><span class="lbl">MP</span><span class="val" id="mpVal"></span></div>
           <div class="bar exp"><div class="fill" id="expFill"></div><span class="lbl">EXP</span><span class="val" id="expVal"></span></div>
@@ -29,7 +29,12 @@
         <canvas id="minimap" width="220" height="64"></canvas>
       </div>
 
-      <div id="hint">Move: Arrows &nbsp; Jump: Space (x2) &nbsp; Drop: Down + Space &nbsp; Attack: Ctrl / A &nbsp; Skills: 1-5 &nbsp; Pause: Esc</div>
+      <div id="buffs"></div>
+      <div id="questTracker" class="panel"></div>
+      <div id="bossBar" class="hidden"><div class="bn">Brambold, the Gloomcap Warden <span id="bossPhase"></span></div><div class="bb"><div id="bossGhost"></div><div id="bossFill"></div></div></div>
+      <div id="chapterBanner"></div>
+
+      <div id="hint">Move: Arrows &nbsp; Jump: Space (x2) &nbsp; Drop: Down + Space &nbsp; Attack: Ctrl / A &nbsp; Skills: 1-5 &nbsp; Talk: E &nbsp; Quests: Q &nbsp; Pause: Esc</div>
 
       <!-- bottom left: chat -->
       <div id="chat" class="panel"><div class="chatTitle">System</div><div id="chatLog"></div></div>
@@ -50,18 +55,27 @@
       <div id="banner"></div>
     </div>
 
+    <div id="dialogue" class="hidden"><div id="dlgPortrait" class="portraitBox"></div><div class="dlgMain"><div id="dlgName"></div><div id="dlgText"></div><div id="dlgChoices"></div><div id="dlgHint"></div></div></div>
+
+    <div id="modal" class="hidden"><div class="mcard"><h2 id="modalTitle"></h2><div id="modalBody"></div><button id="modalClose">Close (Q)</button></div></div>
+    <div id="chapterCard" class="hidden"></div>
+
     <div id="overlay">
       <div class="card">
         <h1 id="overlayTitle">Whispering Grove</h1>
-        <p class="sub">A MapleStory-inspired side-scrolling action prototype</p>
-        <ul>
-          <li><b>Arrow keys</b> &ndash; walk</li>
-          <li><b>Space</b> &ndash; jump, press again in the air to double jump</li>
-          <li><b>Down + Space</b> &ndash; drop through a platform</li>
-          <li><b>Ctrl / A</b> &ndash; basic attack</li>
-          <li><b>1 Slash &middot; 2 Fireball &middot; 3 Heal &middot; 4 Dash &middot; 5 Nova</b> &ndash; skills (cost MP)</li>
-        </ul>
-        <button id="startBtn" disabled>Start</button>
+        <p class="sub" id="overlaySub"></p>
+        <div id="titleBlock">
+          <div class="lbl">Choose your difficulty</div>
+          <div id="diffRow"></div>
+          <p id="diffBlurb"></p>
+          <ul>
+            <li><b>Arrow keys</b> &ndash; walk &nbsp; <b>Space</b> &ndash; jump (x2) &nbsp; <b>Down + Space</b> &ndash; drop</li>
+            <li><b>Ctrl / A</b> &ndash; attack &nbsp; <b>1 Slash &middot; 2 Fireball &middot; 3 Heal &middot; 4 Dash &middot; 5 Nova</b></li>
+            <li><b>E</b> &ndash; talk &nbsp; <b>Q</b> &ndash; quest log &nbsp; <b>Esc</b> &ndash; pause</li>
+          </ul>
+          <div class="btnrow"><button id="newBtn" class="big">New Game</button><button id="contBtn" class="big alt hidden">Continue</button></div>
+        </div>
+        <div id="pauseBlock" class="hidden"><div class="btnrow"><button id="resumeBtn" class="big">Resume</button><button id="quitBtn" class="big alt">Save &amp; Quit</button></div></div>
         <div id="loadMsg">Loading...</div>
       </div>
     </div>
@@ -77,6 +91,12 @@
   <script src="js/Enemy.js"></script>
   <script src="js/PickupManager.js"></script>
   <script src="js/CombatManager.js"></script>
+  <script src="js/Difficulty.js"></script>
+  <script src="js/Dialogue.js"></script>
+  <script src="js/Boons.js"></script>
+  <script src="js/NPC.js"></script>
+  <script src="js/Boss.js"></script>
+  <script src="js/Story.js"></script>
   <script src="js/UI.js"></script>
   <script src="js/main.js"></script>
 </body>

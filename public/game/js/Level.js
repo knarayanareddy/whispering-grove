@@ -5,7 +5,7 @@
 
   class Level {
     constructor() {
-      this.width = 2800; this.height = VH; this.groundY = 600;
+      this.width = 3640; this.height = VH; this.groundY = 600;
       const P = G.Platform;
       this.ground = new P('ground', 0, 600, this.width, 120, true);
       const mk = (n, x, y, w) => new P(n, x, y, w, 46, false);
@@ -18,7 +18,9 @@
         mk('E', 1240, 380, 460),
         mk('D', 1600, 490, 520),
         mk('F', 1940, 380, 460),
-        mk('G', 2300, 490, 420)
+        mk('G', 2300, 490, 420),
+        mk('H', 3020, 470, 240),
+        mk('J', 3340, 470, 240)
       ];
       const by = {}; this.platforms.forEach(p => by[p.name] = p);
       const b = (p, x1, x2) => ({ x1: x1 === undefined ? p.x : x1, x2: x2 === undefined ? p.x + p.w : x2, y: p.y });
@@ -35,6 +37,13 @@
         { type: 'mushroom', bounds: b(by.G) }
       ];
       this.playerStart = { x: 160, y: 600 };
+      // ---- Chapter 1 story layout ----
+      this.gateX = 2900;            // blight gate (opens after the Whisper Motes quest)
+      this.arenaX = 2990;           // crossing this wakes the boss
+      this.bossSpawn = { bounds: { x1: 2960, x2: 3600, y: 600 } };
+      this.npcs = [{ id: 'orrin', name: 'Elder Orrin', x: 360, y: 600, img: 'npc_elder', scale: 0.42, artFacesLeft: true, facing: -1 }];
+      this.motes = [{ x: 720, y: 300 }, { x: 1060, y: 190 }, { x: 2170, y: 300 }];
+      this.checkpoint = null; this.checkpoint2 = { x: 2780, y: 600 };
     }
 
     landOn(l, r, prevB, newB, ignoreOneWay) {

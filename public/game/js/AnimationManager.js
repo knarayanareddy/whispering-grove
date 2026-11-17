@@ -5,7 +5,8 @@
     'player_idle', 'player_walk_01', 'player_walk_02', 'player_jump', 'player_fall', 'player_attack',
     'enemy_slime_idle', 'enemy_slime_walk', 'enemy_slime_hit',
     'enemy_mushroom_idle', 'enemy_mushroom_walk', 'enemy_mushroom_hit',
-    'enemy_spirit_idle', 'enemy_spirit_walk', 'enemy_spirit_hit'
+    'enemy_spirit_idle', 'enemy_spirit_walk', 'enemy_spirit_hit',
+    'boss_gloomcap_idle', 'boss_gloomcap_walk', 'boss_gloomcap_slam', 'boss_gloomcap_hit', 'npc_elder'
   ];
   const images = {};
 
@@ -15,7 +16,7 @@
       return new Promise(function (res) {
         const img = new Image();
         img.onload = function () { images[n] = img; done++; if (onProgress) onProgress(done / NAMES.length); res(); };
-        img.onerror = function () { console.warn('Missing asset', n); done++; res(); };
+        img.onerror = function () { console.warn('Missing asset', n); done++; if (onProgress) onProgress(done / NAMES.length); res(); };
         img.src = 'Assets/' + n + '.png';
       });
     }));

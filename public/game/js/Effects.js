@@ -9,7 +9,8 @@
     exp: { color: '#8fd0ff', size: 20, stroke: '#0b2a4a' },
     gold: { color: '#ffe27a', size: 20, stroke: '#4a3200' },
     info: { color: '#ffffff', size: 22, stroke: '#2a1a3a' },
-    levelup: { color: '#ffe96b', size: 46, stroke: '#7a3a00' }
+    levelup: { color: '#ffe96b', size: 46, stroke: '#7a3a00' },
+    boon: { color: '#ffd9f7', size: 24, stroke: '#4a1a5a' }
   };
 
   class Effects {

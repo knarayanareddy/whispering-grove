@@ -29,7 +29,7 @@
     hurtPlayer(dmg, fromX) {
       const p = this.g.player;
       if (p.takeDamage(dmg, fromX)) {
-        this.g.fx.text(p.x, p.y - 85, dmg, 'player');
+        if (p.lastTaken <= 0) this.g.fx.text(p.x, p.y - 85, 'Absorbed', 'boon'); else this.g.fx.text(p.x, p.y - 85, p.lastTaken, 'player');
         this.g.fx.burst(p.x, p.y - 35, { n: 8, colors: ['#ff7a7a', '#fff'], speed: 220, life: 0.4, size: 4 });
         this.g.camera.addShake(5);
         if (p.dead) { this.g.ui.chat('You were defeated... respawning at the entrance.', 'warn'); }
@@ -41,6 +41,7 @@
       const r = this.roll(opts && opts.mult ? opts.mult : s.mult);
       const dir = e.x >= g.player.x ? 1 : -1;
       const killed = e.takeHit(r.dmg, dir, s.knock);
+      if (e.isBoss) g.ui.bossHit && g.ui.bossHit();
       g.fx.text(e.x + A.rand(-10, 10), e.top - 10, r.dmg, r.crit ? 'crit' : 'normal');
       const hx = e.x - dir * e.w * 0.3, hy = e.cy;
       g.fx.burst(hx, hy, { n: r.crit ? 14 : 8, colors: r.crit ? ['#ffe14a', '#fff', '#ffb02a'] : ['#ffffff', '#cfeaff'], speed: r.crit ? 340 : 260, life: 0.4, size: 5, grav: 300, glow: true, shape: r.crit ? 'star' : 'circle', angle: dir > 0 ? 0 : Math.PI, spread: 1.4 });
@@ -55,8 +56,11 @@
     onKill(e) {
       const g = this.g;
       g.pickups.drop(e); g.player.kills++;
+      if (g.boons && !e.summoned) g.boons.maybeDrop(e);
+      if (g.story) { g.story.onKill(e); if (e.isBoss) g.story.onBossDefeated(e); }
       g.fx.burst(e.x, e.cy, { n: 16, colors: ['#fff', '#ffe9a0', '#bdf3ff'], speed: 300, life: 0.6, size: 5, grav: 200, glow: true, shape: 'star' });
       g.ui.chat(e.s.name + ' defeated!', 'good');
+      if (e.elite) g.fx.text(e.x, e.top - 40, 'Elite slain!', 'crit');
     }
 
     tryUse(id) {
@@ -64,8 +68,9 @@
       if (!s || p.dead || p.hitTimer > 0) return;
       if (p.action) { this.queued = { id: id, t: 0.2 }; return; }
       if (this.cd[id] > 0) { g.ui.slotDenied(id); return; }
-      if (p.mp < s.mp) { g.ui.chat('Not enough MP for ' + s.name + '.', 'warn'); g.fx.text(p.x, p.y - 95, 'No MP', 'info'); g.ui.slotDenied(id); return; }
-      p.mp -= s.mp; this.cd[id] = s.cd;
+      const cost = Math.ceil(s.mp * p.mpCostMul);
+      if (p.mp < cost) { g.ui.chat('Not enough MP for ' + s.name + '.', 'warn'); g.fx.text(p.x, p.y - 95, 'No MP', 'info'); g.ui.slotDenied(id); return; }
+      p.mp -= cost; this.cd[id] = s.cd;
       p.action = { skill: id, t: 0, dur: s.dur, fired: false };
       if (id === 'heal') p.sy = 1.15;
     }
